@@ -117,9 +117,9 @@ public class Experiment {
 				System.out.println("请输入训练文件的绝对路径");
 				
 				//String filename = in.readLine();
-				//String tempname = "E:\\satellite_uncertain.txt";
+				String tempname = "E:\\satellite_uncertain.txt";
 				//String tempname = "E:\\test_uncertain.txt";
-				String tempname = "E:\\glass_uncertain_noid.txt";
+				//String tempname = "E:\\glass_uncertain_noid.txt";
 				//String tempname = "E:\\glass_uncertain.txt";
 				//String tempname = "E:\\iris_uncertain.txt";
 				experiment.prepareList(tempname);
