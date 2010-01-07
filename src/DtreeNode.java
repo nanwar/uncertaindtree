@@ -21,22 +21,28 @@ public class DtreeNode {
 
 	private boolean leafNode = false;
 
+	public boolean isLeafNode() {
+		return leafNode;
+	}
+
+	public void setLeafNode(boolean leafNode) {
+		this.leafNode = leafNode;
+	}
+
 	private int level = -1;
 	
 	private int treeSize = -1;
 	
-	public int getTreeSize(){
-		if (treeSize > 0)
-			return treeSize;
+	public int getTreeSize() {
+		if (this.leafNode)
+			treeSize = 1;
 		else {
 			treeSize = 1;
-			//System.out.println("" + childNode.size());
 			for (int i = 0; i < childNode.size(); i++) {
 				treeSize +=childNode.get(i).getTreeSize();
 				//System.out.println("+ " + childNode.get(i).getTreeSize() + " = " + treeSize);
 			}
 		}
-		//System.out.println("");
 		return treeSize;
 	}
 	/*
@@ -50,6 +56,10 @@ public class DtreeNode {
 	 */
 	private int groupNum = 0;
 	private double[] decisionGroup;
+
+	public double[] getDecisionGroup() {
+		return decisionGroup;
+	}
 
 	/**
 	 * record the child branch node
@@ -80,7 +90,7 @@ public class DtreeNode {
 		// or all the attributes have been used
 
 		// first decide all come to a same group
-		//System.out.println("level = " + this.level);
+//		System.out.println("level = " + this.level);
 		
 		boolean samegroup = true;
 		// TODO:list may be null
@@ -93,7 +103,7 @@ public class DtreeNode {
 		// System.out.println("\ntrainList.size:"+trainList.size());
 		// leaf node
 		if (samegroup) {
-			//System.out.println("all of the same group");
+//			System.out.println("all of the same group");
 			leafNode = true;
 			decisionGroup = new double[groupNum];
 			for (int i = 0; i < groupNum; i++)
@@ -111,7 +121,7 @@ public class DtreeNode {
 			}
 		// no more attribute to classify although the set is not pure
 		if (!attrAvail) {
-			//System.out.println("no attravial");
+//			System.out.println("no attravial");
 			leafNode = true;
 			decisionGroup = new double[groupNum];
 			for (int i = 0; i < groupNum; i++)
@@ -125,9 +135,24 @@ public class DtreeNode {
 				decisionGroup[i] /= allweight;
 			return;
 		}		
-		
-		
-		if (level == 15) {
+//		//前剪枝：限制树的高度，降低复杂度
+//		if (level >= 20) {
+//			leafNode = true;
+//			decisionGroup = new double[groupNum];
+//			for (int i = 0; i < groupNum; i++)
+//				decisionGroup[i] = 0;
+//			double allweight = 0;
+//			for (Instance ins : trainList) {
+//				allweight += ins.getWeight();
+//				decisionGroup[ins.getGroup()] += ins.getWeight();
+//			}
+//			for (int i = 0; i < groupNum; i++)
+//				decisionGroup[i] /= allweight;
+//			return;
+//		}
+		//后剪枝:如果该节点的元组数小于一定数量就停止分裂
+		if(trainList.size() <= ((int)(0.05*((double)Experiment.instanceNum)))){
+//			System.out.println(trainList.size());
 			leafNode = true;
 			decisionGroup = new double[groupNum];
 			for (int i = 0; i < groupNum; i++)
@@ -141,8 +166,6 @@ public class DtreeNode {
 				decisionGroup[i] /= allweight;
 			return;
 		}
-		
-		
 		// ------------------------------------------------------------------
 		// means we have to use Entropy to decide choose which attribute
 		// TODO: taoist:choose one attribute and a split point
@@ -217,9 +240,6 @@ public class DtreeNode {
 				rightList.add(rightChildInstance);
 			}
 		}
-		
-		//debug
-		trainList.clear();
 		// System.out.println("lsize:"+leftList.size()+"rsize:"+rightList.size());
 
 		DtreeNode leftChild = new DtreeNode(this.groupNum, this.level + 1);
@@ -278,7 +298,7 @@ public class DtreeNode {
 			endPoints[2 * i + 1] = trainList.get(i).getAttr(id).getDvalue()[1];
 		}
 		Arrays.sort(endPoints);
-		ArrayList<Double> tempList = new ArrayList<Double>();
+		ArrayList<Double> tempList = new ArrayList();
 		tempList.add(endPoints[0]);
 		// System.out.print(endPoints[0]);
 		for (int i = 1; i < endPoints.length; i++) {
@@ -298,7 +318,7 @@ public class DtreeNode {
 		double bestDivideValue = 0;
 		boolean isInitialized = false;
 		// System.out.println("tempListsize:"+tempList.size());
-		for (int i = 1; i < tempList.size() - 1; i++) {
+		for (int i = 1; i < tempList.size() - 1; i = i + 5) {
 
 			double calcEntropy = calcContinuousEntropy(trainList, id, tempList
 					.get(i));
@@ -353,17 +373,18 @@ public class DtreeNode {
 				if (weightMatrix[i][j] > 0)
 					info += -weightMatrix[i][j]
 							* Math.log(weightMatrix[i][j] / totalWeight[i])/(totalWeight[0]+totalWeight[1]);
-				if (weightMatrix[i][j] / totalWeight[i] > 1) {
-					System.out.println("god: " + weightMatrix[i][j] + " "
-							+ totalWeight[i]);
-					for (int j2 = 0; j2 < totalWeight.length; j2++) {
-						System.out.print(weightMatrix[i][j] + " ");
-					}
-					System.out.println("");
-				}
+//				if (weightMatrix[i][j] / totalWeight[i] > 1) {
+//					System.out.println("god: " + weightMatrix[i][j] + " "
+//							+ totalWeight[i]);
+//					for (int j2 = 0; j2 < totalWeight.length; j2++) {
+//						System.out.print(weightMatrix[i][j] + " ");
+//					}
+//					System.out.println("");
+//				}
 			}
 		}
 		return info;
 	}
-
+	
+	
 }

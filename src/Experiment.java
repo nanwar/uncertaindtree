@@ -7,18 +7,32 @@ public class Experiment {
 	private DtreeNode root = null;
 	private InstanceInput inputer = new InstanceInput();
 	
+	public static int instanceNum = 0;
+	public static int groupNum1 = 0;
+	public static int attriNum1 = 0;
+	/**
+	 *标志叶子节点中如果某个权重比例超过一定值的话就直接归并为上个节点 
+	 */
+	public static double canMerge = 0.80;
+
 	/**
 	 * when train, used to store the train instances(part of the fullList)
 	 * when test, used to store the test instances
 	 */
 	private ArrayList<Instance> trainlist;
 	private ArrayList<Instance> testlist;
+	private ArrayList<Instance> prunelist;
 	
 	public void prepareList(String trainFilename) {
 		int range = 80;
+		int prunerange = 40;
 		ArrayList<Instance> fullList = inputer.inputFile(trainFilename);
+		instanceNum = fullList.size();
+		groupNum1 = inputer.getGroupNum();
+		attriNum1 = inputer.getAttriNum();
 		trainlist = new ArrayList<Instance>();
 		testlist = new ArrayList<Instance>();
+		prunelist = new ArrayList<Instance>();
 		root = new DtreeNode(inputer.getGroupNum(), 1);
 		
 		Random rand = new Random();
@@ -29,6 +43,8 @@ public class Experiment {
 		 */
 		int trainlistSize = fullList.size() * range / 100;
 		int testlistSize = fullList.size() - trainlistSize;
+		int prunelistSize = trainlistSize * prunerange / 100;
+		trainlistSize = trainlistSize - prunelistSize;
 		//int trainlistSize = fullList.size() * 8 / 100;
 		//int testlistSize = fullList.size() * 2 / 100;
 
@@ -37,6 +53,13 @@ public class Experiment {
 			trainlist.add(fullList.get(picNumber));
 			fullList.remove(picNumber);
 			trainlistSize--;
+		}
+		
+		while (prunelistSize > 0) {
+			int picNumber = rand.nextInt(fullList.size());
+			prunelist.add(fullList.get(picNumber));
+			fullList.remove(picNumber);
+			prunelistSize--;
 		}
 		
 		while (testlistSize > 0) {
@@ -62,9 +85,38 @@ public class Experiment {
 			attrUsed[i] = false;
 		
 		root.learn(trainlist,attrUsed);
-		
+		System.out.println("before size: " + root.getTreeSize());
+		//后剪枝
+		sufPruning(root);
+		System.out.println("after size: " + root.getTreeSize());
 		return root.getTreeSize();
 //		return 0;
+	}
+	public void sufPruning(DtreeNode dNode){
+		if(!dNode.isLeafNode()){
+			if(canBeMerged(dNode.getDecisionGroup())){
+				dNode.setLeafNode(true);
+			}
+			else{
+				sufPruning(dNode.getChild(0));
+				sufPruning(dNode.getChild(1));
+			}
+		}
+		
+	}
+	public boolean canBeMerged(double[] weight){
+		double total = 0.0;
+		double max = 0.0;
+		for (int i = 0; i < weight.length; i++) {
+			total += weight[i];
+			if(weight[i] > max)
+				max = weight[i];
+		}
+//		System.out.println("max/total:" + max/total);
+		if(( max / total ) >= canMerge)
+			return true;
+		else
+			return false;
 	}
 	
 	public double test() {
@@ -109,24 +161,23 @@ public class Experiment {
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		
 		//DataInputStream in = new DataInputStream(new BufferedInput(System.in));
-		input = in.readLine();
-		
-		while (!input.equals("exit")){
+//		input = in.readLine();
+		int times = 10;
+		FileWriter fw = new FileWriter("answer.txt");
+		double totalValue = 0.0;
+		for (int i = 0; i < times; i++) {	
 			if (true) {
+				long start = System.currentTimeMillis();
 				experiment.root = null;
-				System.out.println("请输入训练文件的绝对路径");
-				
-				//String filename = in.readLine();
-				String tempname = "E:\\satellite_uncertain.txt";
-				//String tempname = "E:\\test_uncertain.txt";
-				//String tempname = "E:\\glass_uncertain_noid.txt";
-				//String tempname = "E:\\glass_uncertain.txt";
-				//String tempname = "E:\\iris_uncertain.txt";
+//				System.out.println("请输入训练文件的绝对路径");
+//				String tempname = "E:\\iris_uncertain.txt";
+				String tempname = "E:\\glass_uncertain_noid.txt";
+//				String tempname = "E:\\glass_uncertain.txt";
+//				String tempname = "E:\\satellite_uncertain.txt";
 				experiment.prepareList(tempname);
 				
 				int treeSize = experiment.train();
-				System.out.println("size = " + treeSize);
-				
+//				System.out.println("size = " + treeSize);
 				//进行测试
 				if (experiment.root == null) {
 					System.out.println("训练失败!");
@@ -134,11 +185,17 @@ public class Experiment {
 					continue;
 				}
 				double sucrates = experiment.test();
+				totalValue += sucrates;
+				long end = System.currentTimeMillis();
+				fw.append(i + " : " + sucrates + "\n");
 				System.out.println("准确率为: " + sucrates);
+				System.out.println("finish " + i + " time; cost " + (end-start)/1000 + " seconds");
 			}
 			
-			input = in.readLine();
+//			input = in.readLine();
 		}
+		fw.append("平均准确率" + totalValue/times);
+		fw.close();	
 		
 		return;
 	}
