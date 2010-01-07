@@ -127,7 +127,7 @@ public class DtreeNode {
 		}		
 		
 		
-		if (level == 20) {
+		if (level == 15) {
 			leafNode = true;
 			decisionGroup = new double[groupNum];
 			for (int i = 0; i < groupNum; i++)
@@ -217,6 +217,9 @@ public class DtreeNode {
 				rightList.add(rightChildInstance);
 			}
 		}
+		
+		//debug
+		trainList.clear();
 		// System.out.println("lsize:"+leftList.size()+"rsize:"+rightList.size());
 
 		DtreeNode leftChild = new DtreeNode(this.groupNum, this.level + 1);
