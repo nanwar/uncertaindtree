@@ -26,7 +26,7 @@ public class InstanceInput {
 	 * 重新定义的类别记录
 	 * 从零开始标记类别号
 	 */
-	private ArrayList<Integer> groupList = new ArrayList<Integer>();
+	private ArrayList<Integer> groupList;
 	public int getOriginalClassLabel(int id){
 		return groupList.get(id);
 	}
@@ -35,6 +35,9 @@ public class InstanceInput {
 	private char splitSign = ',';
 	
 	public ArrayList<Instance> inputFile (String filename) {
+		attriNum = 0;
+		groupNum = 0;
+		groupList = new ArrayList<Integer>();
 		File file = new File(filename);
 		ArrayList<Instance> instanceList = new ArrayList<Instance> ();
 		
@@ -92,10 +95,12 @@ public class InstanceInput {
 	}
 	
 	private String[] splitFix(String srcString){
+//		System.out.println("attriNum:" + attriNum);
 		String[] ans = new String[attriNum];
 		for (int i = 0; i < ans.length; i++) {
 			ans[i] = srcString.substring(1,srcString.indexOf(suffix));
 			if(i != (ans.length-1)){
+//				System.out.println(srcString);
 				srcString = srcString.substring(srcString.indexOf(suffix)+2);
 			}
 		}
