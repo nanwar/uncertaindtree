@@ -13,7 +13,7 @@ public class Experiment {
 	/**
 	 *标志叶子节点中如果某个权重比例超过一定值的话就直接归并为上个节点 
 	 */
-	public static double canMerge = 0.80;
+	public static double canMerge = 0.90;
 
 	/**
 	 * when train, used to store the train instances(part of the fullList)
@@ -89,6 +89,10 @@ public class Experiment {
 		//后剪枝
 		sufPruning(root);
 		System.out.println("after size: " + root.getTreeSize());
+		root.cartPruning(root, prunelist);
+		//JIE
+		//root.cartPruning(prunelist);
+		System.out.println("after size1: " + root.getTreeSize());
 		return root.getTreeSize();
 //		return 0;
 	}
@@ -162,7 +166,7 @@ public class Experiment {
 		
 		//DataInputStream in = new DataInputStream(new BufferedInput(System.in));
 //		input = in.readLine();
-		int times = 10;
+		int times = 50;
 		FileWriter fw = new FileWriter("answer.txt");
 		double totalValue = 0.0;
 		for (int i = 0; i < times; i++) {	

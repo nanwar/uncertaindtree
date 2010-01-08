@@ -13,10 +13,8 @@ public class DtreeNode {
 		return attrID;
 	}
 
-	/**
-	 * if the chosen attribute is continuous, use which value to divide all the
-	 * values into two parts
-	 */
+	private double expectedError = 0.0;
+	private double backedUpError = 0.0;
 	private double conDivideValue;
 
 	private boolean leafNode = false;
@@ -33,7 +31,7 @@ public class DtreeNode {
 	
 	private int treeSize = -1;
 	
-	public int getTreeSize() {
+	public int getTreeSize(){
 		if (this.leafNode)
 			treeSize = 1;
 		else {
@@ -183,6 +181,13 @@ public class DtreeNode {
 		for (int i = 0; i < groupNum; i++)
 			decisionGroup[i] /= allweight;
 		//---------------------
+		
+		for (int i = 0; i < groupNum; i++)
+			if (decisionGroup[i] > 0.9) {
+				leafNode = true;
+				return;
+			}
+		
 
 		double minEntropy = 0;
 		int bestAttrId = -1;
@@ -298,7 +303,7 @@ public class DtreeNode {
 			endPoints[2 * i + 1] = trainList.get(i).getAttr(id).getDvalue()[1];
 		}
 		Arrays.sort(endPoints);
-		ArrayList<Double> tempList = new ArrayList();
+		ArrayList<Double> tempList = new ArrayList<Double>();
 		tempList.add(endPoints[0]);
 		// System.out.print(endPoints[0]);
 		for (int i = 1; i < endPoints.length; i++) {
@@ -318,7 +323,7 @@ public class DtreeNode {
 		double bestDivideValue = 0;
 		boolean isInitialized = false;
 		// System.out.println("tempListsize:"+tempList.size());
-		for (int i = 1; i < tempList.size() - 1; i = i + 5) {
+		for (int i = 1; i < tempList.size() - 1; i = i + 1) {
 
 			double calcEntropy = calcContinuousEntropy(trainList, id, tempList
 					.get(i));
@@ -385,6 +390,65 @@ public class DtreeNode {
 		}
 		return info;
 	}
-	
-	
+//	public void sufPruning(){
+//		if(!isLeafNode()){
+//			if(canBeMerged(decisionGroup)){
+//				setLeafNode(true);
+//			}
+//			else{
+//				this.getChild(0).sufPruning();
+//				this.getChild(1).sufPruning();
+//			}
+//		}
+//		
+//	}
+//	public boolean canBeMerged(double[] weight){
+//		double total = 0.0;
+//		double max = 0.0;
+//		for (int i = 0; i < weight.length; i++) {
+//			total += weight[i];
+//			if(weight[i] > max)
+//				max = weight[i];
+//		}
+////		System.out.println("max/total:" + max/total);
+//		if(( max / total ) >= Experiment.canMerge)
+//			return true;
+//		else
+//			return false;
+//	}
+
+	public void cartPruning(DtreeNode root1,ArrayList<Instance> ins){
+		if(!leafNode){
+			//对子节点剪枝
+			this.getChild(0).cartPruning(root1,ins);
+			this.getChild(1).cartPruning(root1,ins);
+			//计算相应的e(s)&backuperror
+			//expectederror:如果将该节点作为叶子节点得到的正确率
+			this.leafNode = true;
+			expectedError = calcTest(root1,ins);
+//			System.out.println("exeee:" + expectedError);
+			//backuperror:该节点不剪枝的正确率
+			this.leafNode = false;
+			backedUpError = calcTest(root1,ins);
+//			System.out.println("bacer:" + backedUpError);
+			if(expectedError > backedUpError)
+				this.leafNode = true;
+			//decide whether to cut
+		}
+	}
+	public double calcTest(DtreeNode root1,ArrayList<Instance> ins){
+		int sucCount = 0;
+
+		for (int i = 0; i < ins.size(); i++) {
+			double[] decisions = new double[this.groupNum];
+			decisions = root1.test(ins.get(i));
+			int treeDecision = 0;
+			for (int k = 1; k < this.groupNum; k++)
+				if (decisions[k] > decisions[treeDecision])
+					treeDecision = k;
+			if (ins.get(i).getGroup() == treeDecision)
+				sucCount += 1;
+		}
+		return ((double)sucCount / (double)ins.size());
+	}	
 }
