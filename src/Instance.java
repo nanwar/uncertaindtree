@@ -21,6 +21,29 @@ public class Instance {
 		this.weight = weight;
 	}
 	
+	/**
+	 * @param ins
+	 * @param id
+	 * 要修改的属性的序号
+	 * @param leftBound
+	 * 分裂后的instance的左边界
+	 * @param rightBound
+	 * 分裂后的instance的右边界
+	 * @param weight
+	 */
+	public Instance(Instance ins, int id, double leftBound, double rightBound, double weight){
+//		System.out.println("2:" + leftBound + " " + rightBound);
+//		this.attrs = ins.attrs;
+		this.attrs = new Attribute[Experiment.attriNum1];
+		for (int i = 0; i < Experiment.attriNum1; i++) {
+			this.attrs[i] = new Attribute();
+			this.attrs[i].setDvalue(ins.attrs[i].getDvalue()[0], ins.attrs[i].getDvalue()[1]);
+		}
+		this.group = ins.group;
+		this.weight = weight;
+		this.attrs[id].setDvalue(leftBound,rightBound);
+	}
+	
 	public Attribute getAttr(int id) {
 		return this.attrs[id];
 	}
