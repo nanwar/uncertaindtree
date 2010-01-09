@@ -4,25 +4,72 @@ import java.util.Random;
 import java.io.*;
 
 public class Experiment {
+	/**
+	 * 建立的决策树根节点
+	 */
 	private DtreeNode root = null;
+	/**
+	 * 一次实验中数据读入对象
+	 */
 	private InstanceInput inputer = new InstanceInput();
-	
+	/**
+	 * 一次实验中总元组的个数，包括训练集和测试集
+	 */
 	public static int instanceNum = 0;
+	/**
+	 * 一次实验中类别标志的个数
+	 */
 	public static int groupNum1 = 0;
+	/**
+	 * 一次实验中元组属性的个数
+	 */
 	public static int attriNum1 = 0;
 	/**
 	 *标志叶子节点中如果某个权重比例超过一定值的话就直接归并为上个节点 
 	 */
 	public static double canMerge = 0.90;
-
 	/**
-	 * when train, used to store the train instances(part of the fullList)
-	 * when test, used to store the test instances
+	 * 判断是否可以针对某个节点的分布集中某个类而剪枝：true可以剪枝
+	 */
+	public static boolean pruneByMerge = true;
+	/**
+	 * 是否进行对树高度限制的剪枝
+	 */
+	public static boolean pruneByHight = true;
+	/**
+	 * 是否进行针对某个节点数目过少而剪枝
+	 */
+	public static boolean pruneByNodeNum = true;
+	/**
+	 * 标志节点总是少于某个比例就就行剪枝的百分比
+	 */
+	public static double canNodeNum = 0.05;
+	/**
+	 * 是否针对cart算法对错误率而剪枝
+	 */
+	public static boolean pruneByError = true;
+	/**
+	 * 对一个实验执行的次数
+	 */
+	public static int times = 1;
+	/**
+	 * 训练集
 	 */
 	private ArrayList<Instance> trainlist;
+	/**
+	 * 测试集
+	 */
 	private ArrayList<Instance> testlist;
+	/**
+	 * 剪枝测试集
+	 */
 	private ArrayList<Instance> prunelist;
 	
+	/**
+	 * 对所有元组进行分割得到3个子集:训练集，测试集以及剪枝测试集
+	 * @param trainFilename
+	 * 数据文件路径
+	 */
 	public void prepareList(String trainFilename) {
 		int range = 80;
 		int prunerange = 40;
@@ -39,7 +86,7 @@ public class Experiment {
 		rand.setSeed(new Date().getTime());
 
 		/**
-		 * listSize now is the totel fullList
+		 * listSize now is the total fullList
 		 */
 		int trainlistSize = fullList.size() * range / 100;
 		int testlistSize = fullList.size() - trainlistSize;
@@ -72,11 +119,11 @@ public class Experiment {
 	}
 	
 	/**
-	 * filename: input train file, src.train
-	 * range: 60 means 60% of the train instances
-	 * return: tree size
-	 * @param filename
+	 * 决策树的建立（包括高度剪枝，后剪枝:如果该节点的元组数小于一定数量就停止分裂）
+	 * 
+	 * 
 	 * @return
+	 * tree size
 	 */
 	public int train() {
 		boolean[] attrUsed = new boolean[inputer.getAttriNum()];
@@ -85,16 +132,17 @@ public class Experiment {
 			attrUsed[i] = false;
 		
 		root.learn(trainlist,attrUsed);
-		System.out.println("before size: " + root.getTreeSize());
-		//后剪枝
-		sufPruning(root);
-		System.out.println("after size: " + root.getTreeSize());
-		root.cartPruning(root, prunelist);
-		//JIE
-		//root.cartPruning(prunelist);
-		System.out.println("after size1: " + root.getTreeSize());
+		System.out.println("after builded(including hight pruning and num pruning), decision tree size :  " + root.getTreeSize());
+		//后剪枝：根据节点分布情况
+		if(pruneByMerge){
+			sufPruning(root);
+			System.out.println("after merged pruneing, decision tree size : " + root.getTreeSize());
+		}
+		if(pruneByError){
+			root.cartPruning(root, this.prunelist);
+			System.out.println("after cart pruning, decision tree size : " + root.getTreeSize());
+		}
 		return root.getTreeSize();
-//		return 0;
 	}
 	public void sufPruning(DtreeNode dNode){
 		if(!dNode.isLeafNode()){
@@ -116,7 +164,6 @@ public class Experiment {
 			if(weight[i] > max)
 				max = weight[i];
 		}
-//		System.out.println("max/total:" + max/total);
 		if(( max / total ) >= canMerge)
 			return true;
 		else
@@ -164,9 +211,8 @@ public class Experiment {
 		
 		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 		
-		//DataInputStream in = new DataInputStream(new BufferedInput(System.in));
+//		DataInputStream in = new DataInputStream(new BufferedInput(System.in));
 //		input = in.readLine();
-		int times = 50;
 		FileWriter fw = new FileWriter("answer.txt");
 		double totalValue = 0.0;
 		for (int i = 0; i < times; i++) {	
@@ -181,7 +227,6 @@ public class Experiment {
 				experiment.prepareList(tempname);
 				
 				int treeSize = experiment.train();
-//				System.out.println("size = " + treeSize);
 				//进行测试
 				if (experiment.root == null) {
 					System.out.println("训练失败!");
