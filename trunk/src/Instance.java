@@ -32,8 +32,6 @@ public class Instance {
 	 * @param weight
 	 */
 	public Instance(Instance ins, int id, double leftBound, double rightBound, double weight){
-//		System.out.println("2:" + leftBound + " " + rightBound);
-//		this.attrs = ins.attrs;
 		this.attrs = new Attribute[Experiment.attriNum1];
 		for (int i = 0; i < Experiment.attriNum1; i++) {
 			this.attrs[i] = new Attribute();

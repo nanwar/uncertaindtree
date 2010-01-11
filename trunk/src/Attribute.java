@@ -13,12 +13,10 @@ public class Attribute {
 	}
 
 	private boolean known;
-	
 	public Attribute(){
 		this.dvalue[0] = 0.0;
 		this.dvalue[1] = 0.0;
 	}
-	
 	public Attribute(String strvalue1, String strvalue2) {
 		if (strvalue1.equals("?") || strvalue2.equals("?"))
 			known = false;
@@ -28,6 +26,8 @@ public class Attribute {
 		if (known == true) {
 			this.dvalue[0] = Double.parseDouble(strvalue1);
 			this.dvalue[1] = Double.parseDouble(strvalue2);
+			if(this.dvalue[0]>=this.dvalue[1])
+				System.out.println("oh no");
 		}
 	}
 	
