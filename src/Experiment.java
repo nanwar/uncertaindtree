@@ -51,7 +51,7 @@ public class Experiment {
 	/**
 	 * 对一个实验执行的次数
 	 */
-	public static int times = 1;
+	public static int times = 10;
 	/**
 	 * 结果输出文件
 	 */
@@ -210,6 +210,7 @@ public class Experiment {
 	}
 	
 	public static void main(String[] argv) throws IOException {
+		
 		Experiment experiment = new Experiment();
 		System.out.println("welcom:");
 		

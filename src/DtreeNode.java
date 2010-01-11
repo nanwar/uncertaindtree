@@ -126,6 +126,20 @@ public class DtreeNode {
 			}
 			for (int i = 0; i < groupNum; i++)
 				decisionGroup[i] /= allweight;
+/*			
+			//debug
+			double max = decisionGroup[0];
+			int maxindex = 0;
+			for (int i = 1; i < groupNum; i++) {
+				if (decisionGroup[i] > max){
+					max = decisionGroup[i];
+					maxindex = i;
+				}
+			}
+			for (int i = 0; i < groupNum; i++)
+				decisionGroup[i] = 0;
+			decisionGroup[maxindex] = 1;
+*/
 			return;
 		}		
 		//前剪枝：限制树的高度，降低复杂度Experiment.pruneByHight && ((level > (Math.log(Experiment.instanceNum)/Math.log(2))) || (level > Experiment.attriNum1))
@@ -171,6 +185,20 @@ public class DtreeNode {
 		}
 		for (int i = 0; i < groupNum; i++)
 			decisionGroup[i] /= allweight;
+/*		
+		//debug
+		double max = decisionGroup[0];
+		int maxindex = 0;
+		for (int i = 1; i < groupNum; i++) {
+			if (decisionGroup[i] > max){
+				max = decisionGroup[i];
+				maxindex = i;
+			}
+		}
+		for (int i = 0; i < groupNum; i++)
+			decisionGroup[i] = 0;
+		decisionGroup[maxindex] = 1;
+*/
 		//---------------------
 
 		double minEntropy = 0;
@@ -212,7 +240,13 @@ public class DtreeNode {
 			} else if (ins.getAttr(attrID).getDvalue()[0] >= conDivideValue) {
 				rightList.add(ins);
 			} else {
-				double leftWeight = (conDivideValue - ins.getAttr(attrID).getDvalue()[0])/ (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0]);
+//				double leftWeight = (conDivideValue - ins.getAttr(attrID).getDvalue()[0])/ (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0]);
+				//debug
+				double z = conDivideValue;
+				double mu = (ins.getAttr(attrID).getDvalue()[0] + ins.getAttr(attrID).getDvalue()[1])/2;
+				double sigma = (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0])/6;
+				double leftWeight = Phi(z, mu, sigma);
+				
 //				System.out.println("******* " + ins.getAttr(attrID).getDvalue()[0] + " " +conDivideValue + " " +ins.getAttr(attrID).getDvalue()[1]);
 //				Instance leftChildInstance = new Instance(ins, attrID, ins.getAttr(attrID).getDvalue()[0], conDivideValue, leftWeight* ins.getWeight());
 				Instance leftChildInstance = new Instance(ins, leftWeight* ins.getWeight());
@@ -260,7 +294,14 @@ public class DtreeNode {
 		} else if (ins.getAttr(testNode.attrID).getDvalue()[1] <= testNode.conDivideValue) {
 			return testNode.getChild(0).test(ins);
 		} else {
-			double leftWeight = (conDivideValue - ins.getAttr(attrID).getDvalue()[0])/ (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0]);
+//			double leftWeight = (conDivideValue - ins.getAttr(attrID).getDvalue()[0])/ (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0]);
+			//debug
+			double z = conDivideValue;
+			double mu = (ins.getAttr(attrID).getDvalue()[0] + ins.getAttr(attrID).getDvalue()[1])/2;
+			double sigma = (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0])/6;
+			double leftWeight = Phi(z, mu, sigma);
+			
+			
 //			Instance leftChildInstance = new Instance(ins, attrID, ins.getAttr(attrID).getDvalue()[0], testNode.conDivideValue, leftWeight* ins.getWeight());
 			Instance leftChildInstance = new Instance(ins, leftWeight* ins.getWeight());
 //			Instance rightChildInstance = new Instance(ins, attrID, conDivideValue, ins.getAttr(attrID).getDvalue()[1], ins.getWeight()- leftWeight * ins.getWeight());
@@ -375,9 +416,14 @@ public class DtreeNode {
 				weightMatrix[1][ins.getGroup()] += ins.getWeight();
 				totalWeight[1] += ins.getWeight();
 			} else {
-				double radio = (divideValue - ins.getAttr(id).getDvalue()[0])
-						/ (ins.getAttr(id).getDvalue()[1] - ins.getAttr(id)
-								.getDvalue()[0]);
+//				double radio = (divideValue - ins.getAttr(id).getDvalue()[0])
+//						/ (ins.getAttr(id).getDvalue()[1] - ins.getAttr(id)
+//								.getDvalue()[0]);
+				//debug
+				double z = divideValue;
+				double mu = (ins.getAttr(id).getDvalue()[0] + ins.getAttr(id).getDvalue()[1])/2;
+				double sigma = (ins.getAttr(id).getDvalue()[1] - ins.getAttr(id).getDvalue()[0])/6;
+				double radio = Phi(z, mu, sigma);
 				weightMatrix[0][ins.getGroup()] += ins.getWeight() * radio;
 				totalWeight[0] += weightMatrix[0][ins.getGroup()];
 				weightMatrix[1][ins.getGroup()] += ins.getWeight()
@@ -441,4 +487,59 @@ public class DtreeNode {
 //		System.out.println("size:"+ins.size());
 		return ((double)sucCount / (double)ins.size());
 	}
+	
+	/*
+	 * Guassian for debug
+	 */
+	public double phi(double x) {
+        return Math.exp(-x*x / 2) / Math.sqrt(2 * Math.PI);
+    }
+
+    // return phi(x, mu, signma) = Gaussian pdf with mean mu and stddev sigma
+    public double phi(double x, double mu, double sigma) {
+        return phi((x - mu) / sigma) / sigma;
+    }
+
+	// return Phi(z) = standard Gaussian cdf using Taylor approximation
+    public double Phi(double z) {
+        if (z < -8.0) return 0.0;
+        if (z >  8.0) return 1.0;
+        double sum = 0.0, term = z;
+        for (int i = 3; sum + term != sum; i += 2) {
+            sum  = sum + term;
+            term = term * z * z / i;
+        }
+        return 0.5 + sum * phi(z);
+    }
+
+    // return Phi(z, mu, sigma) = Gaussian cdf with mean mu and stddev sigma
+    public double Phi(double z, double mu, double sigma) {
+        return Phi((z - mu) / sigma);
+    } 
+
+    // Compute z such that Phi(z) = y via bisection search
+    public double PhiInverse(double y) {
+        return PhiInverse(y, .00000001, -8, 8);
+    } 
+
+    // bisection search
+    private double PhiInverse(double y, double delta, double lo, double hi) {
+        double mid = lo + (hi - lo) / 2;
+        if (hi - lo < delta) return mid;
+        if (Phi(mid) > y) return PhiInverse(y, delta, lo, mid);
+        else              return PhiInverse(y, delta, mid, hi);
+    }
+/*    
+  //Guassian debug [0, 6], mu = 3, sigma = 1
+	double z     = 4;
+    double mu    = 3;
+    double sigma = 1;
+    System.out.println(Phi(z, mu, sigma));
+    double y = Phi(z);
+    System.out.println(PhiInverse(y));
+    //-------------------------------------------
+     * 
+     */
 }
+
+
