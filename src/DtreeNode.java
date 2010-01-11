@@ -105,31 +105,32 @@ public class DtreeNode {
 			return;
 		}
 		// decide whether there is attribute to classify
-//		boolean attrAvail = false;
-//
-//		for (int i = 0; i < attrUsed.length; i++)
-//			if (!attrUsed[i]) {
-//				attrAvail = true;
-//				break;
-//			}
+		boolean attrAvail = false;
+
+		for (int i = 0; i < attrUsed.length; i++)
+			if (!attrUsed[i]) {
+				attrAvail = true;
+				break;
+			}
 		// no more attribute to classify although the set is not pure
-//		if (!attrAvail) {
-////			System.out.println("no attravial");
-//			leafNode = true;
-//			decisionGroup = new double[groupNum];
-//			for (int i = 0; i < groupNum; i++)
-//				decisionGroup[i] = 0;
-//			double allweight = 0;
-//			for (Instance ins : trainList) {
-//				allweight += ins.getWeight();
-//				decisionGroup[ins.getGroup()] += ins.getWeight();
-//			}
-//			for (int i = 0; i < groupNum; i++)
-//				decisionGroup[i] /= allweight;
-//			return;
-//		}		
-		//前剪枝：限制树的高度，降低复杂度
-		if (Experiment.pruneByHight && (level >= (Math.log(Experiment.instanceNum)/Math.log(2)))) {
+		if (!attrAvail) {
+//			System.out.println("no attravial");
+			leafNode = true;
+			decisionGroup = new double[groupNum];
+			for (int i = 0; i < groupNum; i++)
+				decisionGroup[i] = 0;
+			double allweight = 0;
+			for (Instance ins : trainList) {
+				allweight += ins.getWeight();
+				decisionGroup[ins.getGroup()] += ins.getWeight();
+			}
+			for (int i = 0; i < groupNum; i++)
+				decisionGroup[i] /= allweight;
+			return;
+		}		
+		//前剪枝：限制树的高度，降低复杂度Experiment.pruneByHight && ((level > (Math.log(Experiment.instanceNum)/Math.log(2))) || (level > Experiment.attriNum1))
+		if ( Experiment.pruneByHight && (level >= Experiment.attriNum1 || level >(Math.log(Experiment.instanceNum)/Math.log(2)))){
+//			System.out.println("level:"+level+";attriNum:"+Experiment.attriNum1+";log:"+(Math.log(Experiment.instanceNum)/Math.log(2)));
 			leafNode = true;
 			decisionGroup = new double[groupNum];
 			for (int i = 0; i < groupNum; i++)
@@ -176,8 +177,8 @@ public class DtreeNode {
 		int bestAttrId = -1;
 		boolean isInitialized = false;
 		for (int id = 0; id < attrUsed.length; id++) {
-//			if (attrUsed[id])
-//				continue;
+			if (attrUsed[id])
+				continue;
 			DouValue<Double, Double> ret = continuousEntropy(trainList, id);
 			double entropy = ret.first;
 			double divideValue = ret.second;
@@ -195,47 +196,52 @@ public class DtreeNode {
 		}
 
 		attrID = bestAttrId;
-//		boolean[] newAttrUsed = new boolean[attrUsed.length];
-//		for (int i = 0; i < attrUsed.length; i++)
-//			newAttrUsed[i] = attrUsed[i];
-//		newAttrUsed[attrID] = true;
+		boolean[] newAttrUsed = new boolean[attrUsed.length];
+		for (int i = 0; i < attrUsed.length; i++)
+			newAttrUsed[i] = attrUsed[i];
+		newAttrUsed[attrID] = true;
 
 		// split the set to L and R
 		ArrayList<Instance> leftList = new ArrayList<Instance>();
 		ArrayList<Instance> rightList = new ArrayList<Instance>();
+//		System.out.println("conDivedeValue: " + conDivideValue);
 		for (Instance ins : trainList) {
+//			System.out.println(ins.getAttr(attrID).getDvalue()[0] + " " + ins.getAttr(attrID).getDvalue()[1]);
 			if (ins.getAttr(attrID).getDvalue()[1] <= conDivideValue) {
 				leftList.add(ins);
 			} else if (ins.getAttr(attrID).getDvalue()[0] >= conDivideValue) {
 				rightList.add(ins);
 			} else {
-//				System.out.println("devide");
-//				if (ins.getAttr(attrID).getDvalue()[1] == conDivideValue)
-//					System.out.println("bug");
 				double leftWeight = (conDivideValue - ins.getAttr(attrID).getDvalue()[0])/ (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0]);
-//				System.out.println("left1:" + ins.getAttr(attrID).getDvalue()[0] + " " + conDivideValue);
-				Instance leftChildInstance = new Instance(ins, attrID, ins.getAttr(attrID).getDvalue()[0], conDivideValue, leftWeight* ins.getWeight());
-//				System.out.println("right1:" + conDivideValue + " " + ins.getAttr(attrID).getDvalue()[1]);
-				Instance rightChildInstance = new Instance(ins, attrID, conDivideValue, ins.getAttr(attrID).getDvalue()[1], ins.getWeight()- leftWeight * ins.getWeight());
-//				System.out.println("left3:" + leftChildInstance.getAttr(attrID).getDvalue()[0] + " " + leftChildInstance.getAttr(attrID).getDvalue()[1]);
-//				System.out.println("right3:" + leftChildInstance.getAttr(attrID).getDvalue()[0] + " " + leftChildInstance.getAttr(attrID).getDvalue()[1]);
+//				System.out.println("******* " + ins.getAttr(attrID).getDvalue()[0] + " " +conDivideValue + " " +ins.getAttr(attrID).getDvalue()[1]);
+//				Instance leftChildInstance = new Instance(ins, attrID, ins.getAttr(attrID).getDvalue()[0], conDivideValue, leftWeight* ins.getWeight());
+				Instance leftChildInstance = new Instance(ins, leftWeight* ins.getWeight());
+//				System.out.println("left : " + leftChildInstance.getAttr(attrID).getDvalue()[0] + " " + leftChildInstance.getAttr(attrID).getDvalue()[1]);
+//				System.out.println("now: " + ins.getAttr(attrID).getDvalue()[0]+ " " + ins.getAttr(attrID).getDvalue()[1]);
+//				Instance rightChildInstance = new Instance(ins, attrID, conDivideValue, ins.getAttr(attrID).getDvalue()[1], ins.getWeight()- leftWeight * ins.getWeight());
+				Instance rightChildInstance = new Instance(ins,ins.getWeight()- leftWeight * ins.getWeight());
+//				System.out.println("right : " + rightChildInstance.getAttr(attrID).getDvalue()[0] + " " + rightChildInstance.getAttr(attrID).getDvalue()[1]);
 				leftList.add(leftChildInstance);
 				rightList.add(rightChildInstance);
 			}
 		}
-//		System.out.println("----------------");
-//		if (leftList.isEmpty())
-//			System.out.println("left empty");
-//		if (rightList.isEmpty())
-//			System.out.println("right empty");
-
+//		System.out.println("lsize: " + leftList.size());
+//		System.out.println("rsize: " + rightList.size());
 		DtreeNode leftChild = new DtreeNode(this.groupNum, this.level + 1);
-		leftChild.learn(leftList, attrUsed);
+		leftChild.learn(leftList, newAttrUsed);
 		this.addChild(leftChild);
+//		System.out.println("left son ***********************");
+//		for (int i = 0; i < leftList.size(); i++) {
+//			System.out.println(leftList.get(i).getAttr(attrID).getDvalue()[0] + " " + leftList.get(i).getAttr(attrID).getDvalue()[1]);
+//		}
 
 		DtreeNode rightChild = new DtreeNode(this.groupNum, this.level + 1);
-		rightChild.learn(rightList, attrUsed);
+		rightChild.learn(rightList, newAttrUsed);
 		this.addChild(rightChild);
+//		System.out.println("right son ***********************");
+//		for (int i = 0; i < rightList.size(); i++) {
+//			System.out.println(rightList.get(i).getAttr(attrID).getDvalue()[0] + " " + rightList.get(i).getAttr(attrID).getDvalue()[1]);
+//		}
 	}
 
 
@@ -255,8 +261,10 @@ public class DtreeNode {
 			return testNode.getChild(0).test(ins);
 		} else {
 			double leftWeight = (conDivideValue - ins.getAttr(attrID).getDvalue()[0])/ (ins.getAttr(attrID).getDvalue()[1] - ins.getAttr(attrID).getDvalue()[0]);
-			Instance leftChildInstance = new Instance(ins, attrID, ins.getAttr(attrID).getDvalue()[0], testNode.conDivideValue, leftWeight* ins.getWeight());
-			Instance rightChildInstance = new Instance(ins, attrID, conDivideValue, ins.getAttr(attrID).getDvalue()[1], ins.getWeight()- leftWeight * ins.getWeight());
+//			Instance leftChildInstance = new Instance(ins, attrID, ins.getAttr(attrID).getDvalue()[0], testNode.conDivideValue, leftWeight* ins.getWeight());
+			Instance leftChildInstance = new Instance(ins, leftWeight* ins.getWeight());
+//			Instance rightChildInstance = new Instance(ins, attrID, conDivideValue, ins.getAttr(attrID).getDvalue()[1], ins.getWeight()- leftWeight * ins.getWeight());
+			Instance rightChildInstance = new Instance(ins, ins.getWeight()- leftWeight * ins.getWeight());
 			
 			//Instance ins1 = new Instance(ins, leftWeight);
 			double[] result0 = testNode.getChild(0).test(leftChildInstance);
@@ -269,6 +277,44 @@ public class DtreeNode {
 		}
 	}
 
+//	public double[] test(Instance ins) {
+//		DtreeNode testNode = this;
+//
+//		double[] result = new double[this.groupNum];
+//		if (testNode.leafNode) {
+//			for (int i = 0; i < this.groupNum; i++)
+//				result[i] = testNode.decisionGroup[i] * ins.getWeight();
+//			return result;
+//		}
+//
+//		if (ins.getAttr(testNode.attrID).getDvalue()[0] > testNode.conDivideValue) {
+//			return testNode.getChild(1).test(ins);
+//		} else if (ins.getAttr(testNode.attrID).getDvalue()[1] <= testNode.conDivideValue) {
+//			return testNode.getChild(0).test(ins);
+//		} else {
+//			double orgWeight = ins.getWeight();
+//			double range = ins.getAttr(testNode.attrID).getDvalue()[1]
+//					- ins.getAttr(testNode.attrID).getDvalue()[0];
+//			double leftWeight = orgWeight
+//					* (testNode.conDivideValue - ins.getAttr(testNode.attrID)
+//							.getDvalue()[0]) / range;
+//			double rightWeight = orgWeight
+//					* (ins.getAttr(testNode.attrID).getDvalue()[1] - testNode.conDivideValue)
+//					/ range;
+//			// ins.setWeight(leftWeight);
+//			Instance ins1 = new Instance(ins, leftWeight);
+//			double[] result0 = testNode.getChild(0).test(ins1);
+//			// ins.setWeight(rightWeight);
+//			Instance ins2 = new Instance(ins, rightWeight);
+//			double[] result1 = testNode.getChild(1).test(ins2);
+//			for (int i = 0; i < this.groupNum; i++)
+//				result[i] = result0[i] + result1[i];
+//			return result;
+//
+//		}
+//	}
+
+	
 	public DouValue<Double, Double> continuousEntropy(
 			ArrayList<Instance> trainList, final int id) {
 		double[] endPoints = new double[trainList.size() * 2];
@@ -277,7 +323,7 @@ public class DtreeNode {
 			endPoints[2 * i + 1] = trainList.get(i).getAttr(id).getDvalue()[1];
 		}
 		Arrays.sort(endPoints);
-		ArrayList<Double> tempList = new ArrayList<Double>();
+		ArrayList<Double> tempList = new ArrayList();
 		tempList.add(endPoints[0]);
 		for (int i = 1; i < endPoints.length; i++) {
 			if (endPoints[i] > tempList.get(tempList.size() - 1)) {
@@ -370,10 +416,13 @@ public class DtreeNode {
 			//backuperror:该节点不剪枝的正确率
 			this.leafNode = false;
 			backedUpError = calcTest(root1,ins);
-			
+//			System.out.println("ex: "+expectedError +" ;back: " + backedUpError);
 			//decide whether to cut
-			if(expectedError > backedUpError)
-				this.leafNode = true;	
+			if(expectedError > backedUpError){
+				this.leafNode = true;
+//				System.out.println("yes");
+			}
+					
 		}
 	}
 	//TODO:to modify
@@ -389,6 +438,7 @@ public class DtreeNode {
 			if (ins.get(i).getGroup() == treeDecision)
 				sucCount += 1;
 		}
+//		System.out.println("size:"+ins.size());
 		return ((double)sucCount / (double)ins.size());
 	}
 }

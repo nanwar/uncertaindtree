@@ -27,11 +27,11 @@ public class Experiment {
 	/**
 	 *标志叶子节点中如果某个权重比例超过一定值的话就直接归并为上个节点 
 	 */
-	public static double canMerge = 0.90;
+	public static double canMerge = 0.9;
 	/**
 	 * 判断是否可以针对某个节点的分布集中某个类而剪枝：true可以剪枝
 	 */
-	public static boolean pruneByMerge = true;
+	public static boolean pruneByMerge = false;
 	/**
 	 * 是否进行对树高度限制的剪枝
 	 */
@@ -39,19 +39,23 @@ public class Experiment {
 	/**
 	 * 是否进行针对某个节点数目过少而剪枝
 	 */
-	public static boolean pruneByNodeNum = true;
+	public static boolean pruneByNodeNum = false;
 	/**
 	 * 标志节点总是少于某个比例就就行剪枝的百分比
 	 */
-	public static double canNodeNum = 0.05;
+	public static double canNodeNum = 0.005;
 	/**
 	 * 是否针对cart算法对错误率而剪枝
 	 */
-	public static boolean pruneByError = true;
+	public static boolean pruneByError = false;
 	/**
 	 * 对一个实验执行的次数
 	 */
 	public static int times = 1;
+	/**
+	 * 结果输出文件
+	 */
+	public static String answerSource = "answer.txt";
 	/**
 	 * 训练集
 	 */
@@ -138,6 +142,9 @@ public class Experiment {
 			sufPruning(root);
 			System.out.println("after merged pruneing, decision tree size : " + root.getTreeSize());
 		}
+		
+		double tempSucrate = this.test();
+		System.out.println("Before cart Pruning, the sucrate = " + tempSucrate);
 		if(pruneByError){
 			root.cartPruning(root, this.prunelist);
 			System.out.println("after cart pruning, decision tree size : " + root.getTreeSize());
@@ -173,7 +180,6 @@ public class Experiment {
 	public double test() {
 		//denote the "+" error and the "-" error
 		int sucCount = 0;
-		
 		
 		for (int i = 0; i < testlist.size(); i++) {
 			double[] decisions = new double[inputer.getGroupNum()];
@@ -213,7 +219,7 @@ public class Experiment {
 		
 //		DataInputStream in = new DataInputStream(new BufferedInput(System.in));
 //		input = in.readLine();
-		FileWriter fw = new FileWriter("answer.txt");
+		FileWriter fw = new FileWriter(answerSource);
 		double totalValue = 0.0;
 		for (int i = 0; i < times; i++) {	
 			if (true) {
@@ -221,9 +227,9 @@ public class Experiment {
 				experiment.root = null;
 //				System.out.println("请输入训练文件的绝对路径");
 //				String tempname = "E:\\iris_uncertain.txt";
-				String tempname = "E:\\glass_uncertain_noid.txt";
+//				String tempname = "E:\\glass_uncertain_noid.txt";
 //				String tempname = "E:\\glass_uncertain.txt";
-//				String tempname = "E:\\satellite_uncertain.txt";
+				String tempname = "E:\\satellite_uncertain.txt";
 				experiment.prepareList(tempname);
 				
 				int treeSize = experiment.train();
